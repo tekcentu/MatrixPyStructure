@@ -10,15 +10,17 @@ Purpose:
 Supported Methods:
     - Gaussian elimination with partial pivoting (DenseMatrix)
     - LDL^T factorization via skyline method (SkylineMatrix)
+    - LDL^T factorization via banded method (BandedMatrix)
     - LDL^T factorization for packed symmetric (SymmetricMatrix)
 
 Assumptions:
-    - For skyline and symmetric solvers, matrix must be SPD.
+    - For skyline, banded, and symmetric solvers, matrix must be SPD.
     - For dense solver, matrix must be nonsingular.
 """
 
 from matrix.dense_matrix import DenseMatrix
 from matrix.symmetric_matrix import SymmetricMatrix
+from matrix.banded_matrix import BandedMatrix
 from matrix.skyline_matrix import SkylineMatrix
 from matrix.vector import Vector
 
@@ -37,7 +39,7 @@ class Solver:
 
         Inputs:
             matrix (BaseMatrix): Coefficient matrix (DenseMatrix,
-                SymmetricMatrix, or SkylineMatrix).
+                SymmetricMatrix, BandedMatrix, or SkylineMatrix).
             b (Vector): Right-hand side vector.
 
         Returns:
@@ -48,6 +50,8 @@ class Solver:
         """
         if isinstance(matrix, SkylineMatrix):
             return Solver.solve_skyline(matrix, b)
+        elif isinstance(matrix, BandedMatrix):
+            return Solver.solve_banded(matrix, b)
         elif isinstance(matrix, SymmetricMatrix):
             return Solver.solve_symmetric(matrix, b)
         elif isinstance(matrix, DenseMatrix):
@@ -143,6 +147,30 @@ class Solver:
         """
         if not isinstance(matrix, SkylineMatrix):
             raise TypeError("Expected SkylineMatrix")
+        if not isinstance(b, Vector):
+            raise TypeError("Expected Vector for RHS")
+
+        mat_copy = matrix.copy()
+        mat_copy.ldlt_factorize()
+        return mat_copy.ldlt_solve(b)
+
+    @staticmethod
+    def solve_banded(matrix, b):
+        """
+        Solve A * x = b using banded LDL^T factorization.
+
+        Inputs:
+            matrix (BandedMatrix): SPD banded coefficient matrix.
+            b (Vector): Right-hand side vector.
+
+        Returns:
+            Vector: Solution vector x.
+
+        Note:
+            Works on a copy of the matrix; original is not modified.
+        """
+        if not isinstance(matrix, BandedMatrix):
+            raise TypeError("Expected BandedMatrix")
         if not isinstance(b, Vector):
             raise TypeError("Expected Vector for RHS")
 

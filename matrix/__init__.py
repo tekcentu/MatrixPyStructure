@@ -12,13 +12,15 @@ Classes:
     Vector          - Mathematical vector with arithmetic operations
     DenseMatrix     - General dense matrix storage
     SymmetricMatrix - Symmetric matrix using upper-triangle storage
+    BandedMatrix    - Symmetric banded matrix storage (fixed bandwidth)
     SkylineMatrix   - Skyline (envelope) matrix storage for FEM
-    Solver          - Linear system solvers (LDL^T, Cholesky)
+    Solver          - Linear system solvers (LDL^T, Gaussian elimination)
 """
 
 from matrix.vector import Vector
 from matrix.dense_matrix import DenseMatrix
 from matrix.symmetric_matrix import SymmetricMatrix
+from matrix.banded_matrix import BandedMatrix
 from matrix.skyline_matrix import SkylineMatrix
 from matrix.solver import Solver
 
@@ -26,6 +28,7 @@ __all__ = [
     "Vector",
     "DenseMatrix",
     "SymmetricMatrix",
+    "BandedMatrix",
     "SkylineMatrix",
     "Solver",
 ]

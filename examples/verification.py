@@ -22,6 +22,7 @@ import math
 from matrix.vector import Vector
 from matrix.dense_matrix import DenseMatrix
 from matrix.symmetric_matrix import SymmetricMatrix
+from matrix.banded_matrix import BandedMatrix
 from matrix.skyline_matrix import SkylineMatrix
 from matrix.solver import Solver
 from structure.node import Node
@@ -160,6 +161,36 @@ def verify_skyline_solver():
 
     for i in range(4):
         all_pass &= check(f"4x4 x[{i}]", x4[i], x_exact[i], tol=1e-6)
+
+    # Banded solver comparison (same 3x3 system)
+    print("\n  --- Banded solver (3x3 tridiagonal) ---")
+    band = BandedMatrix(3, 1)
+    band.set(0, 0, 4.0); band.set(0, 1, 1.0)
+    band.set(1, 1, 4.0); band.set(1, 2, 1.0)
+    band.set(2, 2, 4.0)
+
+    b_band = band.mat_vec(x_exact_3)
+    x_band = Solver.solve_banded(band, b_band)
+    all_pass &= check("Banded x[0]", x_band[0], 1.0)
+    all_pass &= check("Banded x[1]", x_band[1], 2.0, tol=1e-6)
+    all_pass &= check("Banded x[2]", x_band[2], 3.0, tol=1e-6)
+
+    # Banded 4x4 system
+    print("\n  --- Banded solver (4x4, hbw=2) ---")
+    B4 = BandedMatrix(4, 3)  # full bandwidth to hold full matrix
+    for i in range(4):
+        for j in range(i, 4):
+            B4.set(i, j, vals[i][j])
+    b_b4 = B4.mat_vec(x_exact)
+    x_b4 = Solver.solve_banded(B4, b_b4)
+    for i in range(4):
+        all_pass &= check(f"Banded 4x4 x[{i}]", x_b4[i], x_exact[i], tol=1e-6)
+
+    print(f"\n  Storage comparison (3x3 tridiagonal):")
+    print(f"    Dense:     {3*3} elements")
+    print(f"    Symmetric: {3*4//2} elements")
+    print(f"    Banded:    {band.storage_size} elements (hbw={band.half_bandwidth})")
+    print(f"    Skyline:   {sky.storage_size} elements")
 
     return all_pass
 
@@ -390,7 +421,7 @@ def run_all_verifications():
 
     results = {
         "Matrix Operations": verify_matrix_operations(),
-        "Skyline Solver": verify_skyline_solver(),
+        "Skyline & Banded Solvers": verify_skyline_solver(),
         "Truss Element Stiffness": verify_truss_element_stiffness(),
         "Two-Bar Truss": verify_two_bar_truss(),
         "Cantilever Beam": verify_cantilever_beam(),

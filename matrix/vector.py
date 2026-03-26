@@ -95,15 +95,34 @@ class Vector:
         self._data[i] += float(value)
 
     def __getitem__(self, i):
-        """Allow indexing with []."""
+        """
+        Allow indexing with [].
+
+        Inputs:
+            i (int): Index (0-based).
+
+        Returns:
+            float: Element at index i.
+        """
         return self.get(i)
 
     def __setitem__(self, i, value):
-        """Allow assignment with []."""
+        """
+        Allow assignment with [].
+
+        Inputs:
+            i (int): Index (0-based).
+            value (float): Value to store.
+        """
         self.set(i, value)
 
     def __len__(self):
-        """Return vector size."""
+        """
+        Return vector size.
+
+        Returns:
+            int: Number of elements.
+        """
         return self._n
 
     def __add__(self, other):
@@ -163,11 +182,24 @@ class Vector:
         return result
 
     def __rmul__(self, scalar):
-        """Allow scalar * vector."""
+        """
+        Allow scalar * vector (reverse multiplication).
+
+        Inputs:
+            scalar (float): Scalar multiplier.
+
+        Returns:
+            Vector: Scaled vector.
+        """
         return self.__mul__(scalar)
 
     def __neg__(self):
-        """Negate the vector."""
+        """
+        Negate the vector: -self.
+
+        Returns:
+            Vector: Negated vector with all elements sign-flipped.
+        """
         return self * (-1.0)
 
     def dot(self, other):
@@ -219,12 +251,25 @@ class Vector:
         return self._data[:]
 
     def __repr__(self):
-        """String representation."""
+        """
+        String representation of the vector.
+
+        Returns:
+            str: Formatted string showing all elements in scientific notation.
+        """
         items = ", ".join(f"{x:.6e}" for x in self._data)
         return f"Vector([{items}])"
 
     def __eq__(self, other):
-        """Check equality within floating-point tolerance."""
+        """
+        Check equality within floating-point tolerance (1e-12).
+
+        Inputs:
+            other (Vector): Vector to compare against.
+
+        Returns:
+            bool: True if all elements match within tolerance.
+        """
         if not isinstance(other, Vector):
             return False
         if self._n != other._n:

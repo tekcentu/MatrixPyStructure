@@ -4,7 +4,7 @@ test_matrix.py - Unit Tests for Matrix Library
 
 Purpose:
     Comprehensive unit tests for all matrix types: Vector, DenseMatrix,
-    SymmetricMatrix, SkylineMatrix, and Solver.
+    SymmetricMatrix, BandedMatrix, SkylineMatrix, and Solver.
 
 Running:
     python -m pytest tests/test_matrix.py -v
@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from matrix.vector import Vector
 from matrix.dense_matrix import DenseMatrix
 from matrix.symmetric_matrix import SymmetricMatrix
+from matrix.banded_matrix import BandedMatrix
 from matrix.skyline_matrix import SkylineMatrix
 from matrix.solver import Solver
 
@@ -133,6 +134,91 @@ def test_symmetric_matrix():
     assert abs(Sv[2] - 11.0) < 1e-12  # 2+3+6
 
 
+def test_banded_matrix_basic():
+    """Test BandedMatrix creation, access, and symmetry."""
+    # 3x3 tridiagonal: half-bandwidth = 1
+    B = BandedMatrix(3, 1)
+
+    B.set(0, 0, 4.0)
+    B.set(0, 1, 1.0)
+    B.set(1, 1, 4.0)
+    B.set(1, 2, 1.0)
+    B.set(2, 2, 4.0)
+
+    assert abs(B.get(0, 0) - 4.0) < 1e-12
+    assert abs(B.get(0, 1) - 1.0) < 1e-12
+    assert abs(B.get(1, 0) - 1.0) < 1e-12  # symmetry
+    assert abs(B.get(0, 2) - 0.0) < 1e-12  # outside band
+
+    # Storage: 3 * 2 = 6
+    assert B.storage_size == 6
+    assert B.half_bandwidth == 1
+    assert B.bandwidth == 3
+
+
+def test_banded_matrix_matvec():
+    """Test BandedMatrix matrix-vector product."""
+    # Same tridiagonal as skyline test
+    B = BandedMatrix(3, 1)
+    B.set(0, 0, 4.0); B.set(0, 1, 1.0)
+    B.set(1, 1, 4.0); B.set(1, 2, 1.0)
+    B.set(2, 2, 4.0)
+
+    v = Vector([1.0, 2.0, 3.0])
+    Bv = B.mat_vec(v)
+    # [4  1  0] [1]   [6 ]
+    # [1  4  1] [2] = [12]
+    # [0  1  4] [3]   [14]
+    assert abs(Bv[0] - 6.0) < 1e-12
+    assert abs(Bv[1] - 12.0) < 1e-12
+    assert abs(Bv[2] - 14.0) < 1e-12
+
+
+def test_banded_from_connectivity():
+    """Test BandedMatrix creation from DOF connectivity."""
+    # 4 DOFs, two elements: [0,1,2] and [1,2,3]
+    B = BandedMatrix.from_dof_connectivity(4, [[0, 1, 2], [1, 2, 3]])
+    # max diff = max(2-0, 3-1) = 2
+    assert B.half_bandwidth == 2
+
+
+def test_banded_solver():
+    """Test banded LDL^T solver with known solution."""
+    B = BandedMatrix(3, 1)
+    B.set(0, 0, 4.0); B.set(0, 1, 1.0)
+    B.set(1, 1, 4.0); B.set(1, 2, 1.0)
+    B.set(2, 2, 4.0)
+
+    x_exact = Vector([1.0, 2.0, 3.0])
+    b = B.mat_vec(x_exact)
+
+    x = Solver.solve_banded(B, b)
+    for i in range(3):
+        assert abs(x[i] - x_exact[i]) < 1e-8, \
+            f"x[{i}] = {x[i]}, expected {x_exact[i]}"
+
+
+def test_banded_solver_larger():
+    """Test banded solver with 4x4 system, bandwidth 2."""
+    B = BandedMatrix(4, 2)
+    vals = [[10, 2, 3, 0],
+            [2, 8, 1, 2],
+            [3, 1, 6, 1],
+            [0, 2, 1, 5]]
+    for i in range(4):
+        for j in range(i, 4):
+            if abs(vals[i][j]) > 0:
+                B.set(i, j, vals[i][j])
+
+    x_exact = Vector([1.0, 2.0, 3.0, 4.0])
+    b = B.mat_vec(x_exact)
+
+    x = Solver.solve_banded(B, b)
+    for i in range(4):
+        assert abs(x[i] - x_exact[i]) < 1e-8, \
+            f"x[{i}] = {x[i]}, expected {x_exact[i]}"
+
+
 def test_skyline_matrix_basic():
     """Test SkylineMatrix creation and access."""
     # 3x3 tridiagonal: column heights [1, 2, 2]
@@ -222,6 +308,11 @@ def run_all_tests():
         test_dense_matrix_basic,
         test_dense_matrix_operations,
         test_symmetric_matrix,
+        test_banded_matrix_basic,
+        test_banded_matrix_matvec,
+        test_banded_from_connectivity,
+        test_banded_solver,
+        test_banded_solver_larger,
         test_skyline_matrix_basic,
         test_skyline_from_connectivity,
         test_skyline_solver,

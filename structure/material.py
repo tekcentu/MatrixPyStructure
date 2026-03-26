@@ -54,12 +54,22 @@ class Material:
 
     @property
     def E(self):
-        """Shorthand for elastic modulus."""
+        """
+        Shorthand for elastic modulus.
+
+        Returns:
+            float: Young's modulus value.
+        """
         return self.elastic_modulus
 
     @property
     def nu(self):
-        """Shorthand for Poisson's ratio."""
+        """
+        Shorthand for Poisson's ratio.
+
+        Returns:
+            float: Poisson's ratio value.
+        """
         return self.poisson_ratio
 
     def __repr__(self):

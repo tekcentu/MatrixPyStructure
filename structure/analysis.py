@@ -11,7 +11,7 @@ Main Steps:
     1. Assign DOFs to nodes.
     2. Assemble global stiffness matrix (skyline storage).
     3. Assemble global load vector.
-    4. Apply boundary conditions (penalty method).
+    4. Apply boundary conditions (elimination method).
     5. Solve K * u = F using LDL^T factorization.
     6. Compute support reactions.
     7. Compute member forces.
@@ -26,6 +26,8 @@ Units:
 """
 
 from matrix.solver import Solver
+from matrix.banded_matrix import BandedMatrix
+from matrix.skyline_matrix import SkylineMatrix
 from matrix.vector import Vector
 
 
@@ -44,6 +46,11 @@ class AnalysisResults:
     """
 
     def __init__(self):
+        """
+        Initialize an empty results container.
+
+        All fields are set to None or empty and populated after analysis.
+        """
         self.displacements = None
         self.reactions = {}
         self.member_forces = {}
@@ -80,7 +87,12 @@ class AnalysisResults:
                 print(f"{nid:>6} {ux:>14.6e} {uy:>14.6e} {rz:>14.6e}")
 
     def print_reactions(self):
-        """Print support reactions in a formatted table."""
+        """
+        Print support reactions in a formatted table.
+
+        Outputs:
+            Prints to stdout: Node ID, Rx, Ry, Mz for each supported node.
+        """
         print("\n" + "=" * 60)
         print("SUPPORT REACTIONS")
         print("=" * 60)
@@ -140,15 +152,19 @@ class StaticAnalysis:
         results (AnalysisResults): Analysis results after solve().
     """
 
-    def __init__(self, model):
+    def __init__(self, model, storage="skyline"):
         """
         Create a static analysis for the given model.
 
         Inputs:
             model (StructuralModel): Structural model with nodes, elements,
                 loads, and boundary conditions defined.
+            storage (str): Matrix storage scheme - "skyline" (default)
+                or "banded". Banded storage uses fixed half-bandwidth,
+                skyline adapts to actual column profiles.
         """
         self.model = model
+        self.storage = storage
         self.results = AnalysisResults()
 
     def solve(self, verbose=True):
@@ -166,7 +182,7 @@ class StaticAnalysis:
             1. Assign DOFs.
             2. Assemble global stiffness matrix (skyline).
             3. Assemble global load vector.
-            4. Apply boundary conditions (penalty method).
+            4. Apply boundary conditions (elimination method).
             5. Solve K*u = F via LDL^T.
             6. Compute reactions: R = K_orig * u - F_orig.
             7. Compute member forces from displacements.
@@ -182,12 +198,15 @@ class StaticAnalysis:
 
         # Step 2: Assemble global stiffness matrix
         if verbose:
-            print("Assembling stiffness matrix (skyline storage)...")
-        K = model.assemble_stiffness_matrix()
+            print(f"Assembling stiffness matrix ({self.storage} storage)...")
+        K = model.assemble_stiffness_matrix(storage=self.storage)
         self.results.K_assembled = K.copy()
         if verbose:
-            print(f"  Skyline storage: {K.storage_size} elements "
-                  f"(vs {model.total_dofs**2} full)")
+            info = f"  {self.storage.capitalize()} storage: {K.storage_size} elements"
+            if isinstance(K, BandedMatrix):
+                info += f" (hbw={K.half_bandwidth})"
+            info += f" (vs {model.total_dofs**2} full)"
+            print(info)
 
         # Step 3: Assemble load vector
         if verbose:
@@ -202,8 +221,8 @@ class StaticAnalysis:
 
         # Step 5: Solve
         if verbose:
-            print("Solving K*u = F (LDL^T skyline solver)...")
-        u = Solver.solve_skyline(K, F)
+            print(f"Solving K*u = F (LDL^T {self.storage} solver)...")
+        u = Solver.solve(K, F)
         self.results.displacements = u
 
         # Step 6: Compute reactions

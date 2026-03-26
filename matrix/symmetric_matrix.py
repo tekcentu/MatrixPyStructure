@@ -160,7 +160,12 @@ class SymmetricMatrix(BaseMatrix):
 
     @property
     def storage_size(self):
-        """Return number of stored elements (upper triangle)."""
+        """
+        Return number of stored elements (upper triangle).
+
+        Returns:
+            int: n*(n+1)/2.
+        """
         return self._storage_size
 
     def get_diagonal(self):

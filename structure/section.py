@@ -50,12 +50,22 @@ class Section:
 
     @property
     def A(self):
-        """Shorthand for area."""
+        """
+        Shorthand for area.
+
+        Returns:
+            float: Cross-sectional area value.
+        """
         return self.area
 
     @property
     def I(self):
-        """Shorthand for moment of inertia."""
+        """
+        Shorthand for moment of inertia.
+
+        Returns:
+            float: Second moment of area (I_z) value.
+        """
         return self.moment_of_inertia
 
     def __repr__(self):

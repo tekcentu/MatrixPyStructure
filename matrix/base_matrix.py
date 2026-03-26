@@ -104,7 +104,13 @@ class BaseMatrix(ABC):
             )
 
     def __repr__(self):
-        """Return string representation of the matrix."""
+        """
+        Return string representation of the matrix.
+
+        Returns:
+            str: Formatted string with all elements in scientific notation,
+                 one row per line.
+        """
         rows = []
         for i in range(self._n):
             row = [f"{self.get(i, j):12.4e}" for j in range(self._n)]

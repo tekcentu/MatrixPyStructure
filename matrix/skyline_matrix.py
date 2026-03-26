@@ -419,12 +419,22 @@ class SkylineMatrix(BaseMatrix):
 
     @property
     def column_heights(self):
-        """Return list of column heights."""
+        """
+        Return list of column heights.
+
+        Returns:
+            list[int]: Copy of column heights array.
+        """
         return self._column_heights[:]
 
     @property
     def storage_size(self):
-        """Return total number of stored elements."""
+        """
+        Return total number of stored elements.
+
+        Returns:
+            int: Length of the packed storage array.
+        """
         return len(self._data)
 
     @property

@@ -82,13 +82,23 @@ class Truss2D:
 
     @property
     def cos_angle(self):
-        """Direction cosine (cos theta) of element axis."""
+        """
+        Direction cosine (cos theta) of element axis.
+
+        Returns:
+            float: cos(theta) = (x_j - x_i) / L.
+        """
         L = self.length
         return (self.node_j.x - self.node_i.x) / L
 
     @property
     def sin_angle(self):
-        """Direction sine (sin theta) of element axis."""
+        """
+        Direction sine (sin theta) of element axis.
+
+        Returns:
+            float: sin(theta) = (y_j - y_i) / L.
+        """
         L = self.length
         return (self.node_j.y - self.node_i.y) / L
 
@@ -98,6 +108,9 @@ class Truss2D:
 
         Returns:
             list[int]: Global DOF indices [ui_x, ui_y, uj_x, uj_y].
+
+        Note:
+            Requires that assign_dofs() has been called on both nodes.
         """
         return self.node_i.dof_indices + self.node_j.dof_indices
 
@@ -260,18 +273,33 @@ class Frame2D:
 
     @property
     def length(self):
-        """Compute element length."""
+        """
+        Compute element length.
+
+        Returns:
+            float: Distance between node_i and node_j.
+        """
         return self.node_i.distance_to(self.node_j)
 
     @property
     def cos_angle(self):
-        """Direction cosine of element axis."""
+        """
+        Direction cosine (cos theta) of element axis.
+
+        Returns:
+            float: cos(theta) = (x_j - x_i) / L.
+        """
         L = self.length
         return (self.node_j.x - self.node_i.x) / L
 
     @property
     def sin_angle(self):
-        """Direction sine of element axis."""
+        """
+        Direction sine (sin theta) of element axis.
+
+        Returns:
+            float: sin(theta) = (y_j - y_i) / L.
+        """
         L = self.length
         return (self.node_j.y - self.node_i.y) / L
 
@@ -281,6 +309,9 @@ class Frame2D:
 
         Returns:
             list[int]: Global DOFs [ui_x, ui_y, ri_z, uj_x, uj_y, rj_z].
+
+        Note:
+            Requires that assign_dofs() has been called on both nodes.
         """
         return self.node_i.dof_indices + self.node_j.dof_indices
 

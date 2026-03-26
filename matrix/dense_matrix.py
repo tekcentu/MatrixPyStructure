@@ -160,7 +160,15 @@ class DenseMatrix(BaseMatrix):
         return result
 
     def __rmul__(self, scalar):
-        """Allow scalar * matrix."""
+        """
+        Allow scalar * matrix (reverse multiplication).
+
+        Inputs:
+            scalar (float): Scalar multiplier.
+
+        Returns:
+            DenseMatrix: Scaled matrix.
+        """
         return self.__mul__(scalar)
 
     def mat_vec(self, v):

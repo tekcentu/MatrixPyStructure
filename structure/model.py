@@ -22,6 +22,7 @@ Assumptions:
 """
 
 from matrix.skyline_matrix import SkylineMatrix
+from matrix.banded_matrix import BandedMatrix
 from matrix.vector import Vector
 
 
@@ -128,20 +129,30 @@ class StructuralModel:
             dof_lists.append(elem.get_dof_indices())
         return dof_lists
 
-    def assemble_stiffness_matrix(self):
+    def assemble_stiffness_matrix(self, storage="skyline"):
         """
-        Assemble the global stiffness matrix using skyline storage.
+        Assemble the global stiffness matrix.
+
+        Inputs:
+            storage (str): Storage scheme to use. Options:
+                "skyline" - Skyline (envelope) storage (default).
+                    Adapts to the actual nonzero pattern per column.
+                    Best for irregular meshes.
+                "banded" - Banded symmetric storage.
+                    Uses fixed half-bandwidth for all columns.
+                    Simpler and may be faster for regular meshes.
 
         Returns:
-            SkylineMatrix: Assembled global stiffness matrix.
+            SkylineMatrix or BandedMatrix: Assembled global stiffness matrix.
 
         Algorithm:
-            1. Compute column heights from element connectivity.
-            2. Create skyline matrix.
+            1. Compute column heights or bandwidth from element connectivity.
+            2. Create matrix with appropriate storage scheme.
             3. For each element:
                a. Compute element global stiffness matrix.
                b. Add element contributions to global matrix using
                   scatter (direct stiffness method).
+               c. Only upper triangle is assembled (symmetric storage).
         """
         if not self._dofs_assigned:
             self.assign_dofs()
@@ -149,8 +160,16 @@ class StructuralModel:
         n = self.total_dofs
         element_dofs = self._get_element_dof_lists()
 
-        # Create skyline matrix with column heights from connectivity
-        K = SkylineMatrix.from_dof_connectivity(n, element_dofs)
+        # Create matrix with chosen storage scheme
+        if storage == "banded":
+            K = BandedMatrix.from_dof_connectivity(n, element_dofs)
+        elif storage == "skyline":
+            K = SkylineMatrix.from_dof_connectivity(n, element_dofs)
+        else:
+            raise ValueError(
+                f"Unknown storage scheme '{storage}'. "
+                f"Use 'skyline' or 'banded'."
+            )
 
         # Assemble element stiffness matrices
         for elem in self.elements:
@@ -163,8 +182,8 @@ class StructuralModel:
                 for j_local in range(n_dofs):
                     j_global = dofs[j_local]
                     # Only assemble upper triangle (i_global <= j_global)
-                    # since SkylineMatrix is symmetric and add(i,j) with
-                    # i>j maps to (j,i), causing double-counting otherwise
+                    # since symmetric storage maps add(i,j) with
+                    # i>j to (j,i), causing double-counting otherwise
                     if i_global <= j_global:
                         val = k_e.get(i_local, j_local)
                         if abs(val) > 1e-30:
@@ -275,6 +294,12 @@ class StructuralModel:
         return constrained
 
     def __repr__(self):
+        """
+        String representation of the structural model.
+
+        Returns:
+            str: Summary showing type, node count, element count, and DOFs.
+        """
         return (
             f"StructuralModel(type={self.analysis_type}, "
             f"nodes={len(self.nodes)}, elements={len(self.elements)}, "
