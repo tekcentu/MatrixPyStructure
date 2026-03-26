@@ -1,0 +1,32 @@
+{
+    "analysis_type": "truss",
+    "nodes": [
+        {"id": 0, "x": 0.0, "y": 0.0},
+        {"id": 1, "x": 4.0, "y": 0.0},
+        {"id": 2, "x": 2.0, "y": 3.0}
+    ],
+    "materials": [
+        {"id": 0, "E": 200000000.0, "name": "Steel"}
+    ],
+    "sections": [
+        {"id": 0, "A": 0.001, "name": "Standard Bar"}
+    ],
+    "elements": [
+        {"id": 0, "node_i": 0, "node_j": 1, "material": 0, "section": 0},
+        {"id": 1, "node_i": 0, "node_j": 2, "material": 0, "section": 0},
+        {"id": 2, "node_i": 1, "node_j": 2, "material": 0, "section": 0}
+    ],
+    "boundary_conditions": [
+        {"node": 0, "dof": 0, "value": 0.0},
+        {"node": 0, "dof": 1, "value": 0.0},
+        {"node": 1, "dof": 1, "value": 0.0}
+    ],
+    "load_cases": [
+        {
+            "name": "Gravity Load",
+            "loads": [
+                {"node": 2, "fx": 0.0, "fy": -10.0}
+            ]
+        }
+    ]
+}
